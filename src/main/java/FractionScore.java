@@ -1,3 +1,8 @@
+import org.apache.spark.SparkConf;
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.sql.SparkSession;
+
 import java.io.Serializable;
 import java.util.LinkedList;
 import java.util.Random;
@@ -84,7 +89,15 @@ public class FractionScore {
             points_lists.get(i).setFeature_type(spatial_features.get(ind));
             System.out.println(points_lists.get(i).getFeature_type().getFeature_name()+" "+points_lists.get(i).getX()+" "+points_lists.get(i).getY());
         }
-        
+        SparkSession spark= SparkSession.builder()
+                .master("local")
+                .appName("BDAProject")
+                .getOrCreate();
+        JavaSparkContext sc=new JavaSparkContext(spark.sparkContext());
+        JavaRDD<Spatial_Point> points_rdd=sc.parallelize(points_lists);
+        for(Spatial_Point person : points_rdd.collect()){
+            System.out.println(person.getFeature_type().getFeature_name()+" "+person.getX()+" "+person.getY());
+        }
 
     }
 }
