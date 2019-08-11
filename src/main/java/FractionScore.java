@@ -87,7 +87,7 @@ public class FractionScore {
             int ind=random.nextInt(spatial_features.size());
 
             points_lists.get(i).setFeature_type(spatial_features.get(ind));
-            System.out.println(points_lists.get(i).getFeature_type().getFeature_name()+" "+points_lists.get(i).getX()+" "+points_lists.get(i).getY());
+//            System.out.println(points_lists.get(i).getFeature_type().getFeature_name()+" "+points_lists.get(i).getX()+" "+points_lists.get(i).getY());
         }
         SparkSession spark= SparkSession.builder()
                 .master("local")
@@ -95,9 +95,12 @@ public class FractionScore {
                 .getOrCreate();
         JavaSparkContext sc=new JavaSparkContext(spark.sparkContext());
         JavaRDD<Spatial_Point> points_rdd=sc.parallelize(points_lists);
+        JavaRDD<Spatial_Feature> spatial_feature_rdd=sc.parallelize(spatial_features);
         for(Spatial_Point person : points_rdd.collect()){
             System.out.println(person.getFeature_type().getFeature_name()+" "+person.getX()+" "+person.getY());
         }
-
+        for(Spatial_Feature f : spatial_feature_rdd.collect()){
+            System.out.println(f.getFeature_name());
+        }
     }
 }
