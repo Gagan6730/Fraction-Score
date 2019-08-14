@@ -1,9 +1,13 @@
 import org.apache.spark.SparkConf;
+import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.sql.SparkSession;
+import scala.Tuple2;
+import shapeless.Tuple;
 
 import java.io.Serializable;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Random;
 
@@ -63,6 +67,24 @@ class Spatial_Point implements Serializable {
 }
 public class FractionScore {
 
+    public static void FractionComputation(JavaRDD<Spatial_Point> points_rdd,JavaRDD<Spatial_Feature> spatial_feature_rdd, int dist_thresh)
+    {
+        HashMap<Spatial_Point,HashMap<Spatial_Feature,Integer>> neighbour_count_map=new HashMap<>();
+        JavaPairRDD<Spatial_Point, HashMap<Spatial_Feature,LinkedList<Integer>>> neighbour_count_rdd;
+        for (Spatial_Point p:points_rdd.collect()) {
+            HashMap<Spatial_Feature,Integer> map=new HashMap<>();
+            for (Spatial_Feature f:spatial_feature_rdd.collect())
+            {
+                map.put(f,0);
+
+            }
+            neighbour_count_map.put(p,map);
+
+        }
+    }
+
+
+
     public static void main(String args[])
     {
         Random random=new Random();
@@ -96,11 +118,13 @@ public class FractionScore {
         JavaSparkContext sc=new JavaSparkContext(spark.sparkContext());
         JavaRDD<Spatial_Point> points_rdd=sc.parallelize(points_lists);
         JavaRDD<Spatial_Feature> spatial_feature_rdd=sc.parallelize(spatial_features);
-        for(Spatial_Point person : points_rdd.collect()){
-            System.out.println(person.getFeature_type().getFeature_name()+" "+person.getX()+" "+person.getY());
-        }
-        for(Spatial_Feature f : spatial_feature_rdd.collect()){
-            System.out.println(f.getFeature_name());
-        }
+//        for(Spatial_Point person : points_rdd.collect()){
+//            System.out.println(person.getFeature_type().getFeature_name()+" "+person.getX()+" "+person.getY());
+//        }
+//        for(Spatial_Feature f : spatial_feature_rdd.collect()){
+//            System.out.println(f.getFeature_name());
+//        }
+
+
     }
 }
