@@ -66,7 +66,32 @@ class Spatial_Point implements Serializable {
     }
 }
 public class FractionScore {
+    private static double calca_dist(Spatial_Point s1,Spatial_Point s2)
+    {
+        double diff_x=Math.pow(s1.getX()-s2.getX(),2);
+        double diff_y=Math.pow(s1.getY()-s2.getY(),2);
 
+        return Math.sqrt(diff_x+diff_y);
+    }
+    public static LinkedList<Spatial_Point> find_points_in_dist_d(int d,Spatial_Point point,JavaRDD<Spatial_Point> points_rdd)
+    {
+        LinkedList<Spatial_Point> list_of_points_in_d=new LinkedList<>();
+        for (Spatial_Point p:points_rdd.collect())
+        {
+            if(p.equals(point))
+            {
+                continue;
+            }
+            else
+            {
+                if(calca_dist(p,point)>=d)
+                {
+                    list_of_points_in_d.add(p);
+                }
+            }
+        }
+        return list_of_points_in_d;
+    }
     public static void FractionComputation(JavaRDD<Spatial_Point> points_rdd,JavaRDD<Spatial_Feature> spatial_feature_rdd, int dist_thresh)
     {
         HashMap<Spatial_Point,HashMap<Spatial_Feature,Integer>> neighbour_count_map=new HashMap<>();
@@ -79,7 +104,13 @@ public class FractionScore {
 
             }
             neighbour_count_map.put(p,map);
-
+        }
+        for (Spatial_Point p:points_rdd.collect()) {
+            LinkedList<Spatial_Point> list_of_points_in_d=find_points_in_dist_d(dist_thresh,p,points_rdd);
+            for(Spatial_Point point : list_of_points_in_d)
+            {
+                
+            }
         }
     }
 
