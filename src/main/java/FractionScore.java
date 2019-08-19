@@ -92,26 +92,49 @@ public class FractionScore {
         }
         return list_of_points_in_d;
     }
-    public static void FractionComputation(JavaRDD<Spatial_Point> points_rdd,JavaRDD<Spatial_Feature> spatial_feature_rdd, int dist_thresh)
+    public static void FractionComputation(JavaRDD<Spatial_Point> points_rdd,JavaRDD<Spatial_Feature> spatial_feature_rdd, int dist_thresh,JavaSparkContext sc)
     {
         HashMap<Spatial_Point,HashMap<Spatial_Feature,Integer>> neighbour_count_map=new HashMap<>();
-        JavaPairRDD<Spatial_Point, HashMap<Spatial_Feature,LinkedList<Integer>>> neighbour_count_rdd;
+        HashMap<Spatial_Point,HashMap<Spatial_Feature,Double>> label_set=new HashMap<>();
+        JavaPairRDD<Spatial_Point, HashMap<Spatial_Feature,Double>> label_set_rdd;
         for (Spatial_Point p:points_rdd.collect()) {
-            HashMap<Spatial_Feature,Integer> map=new HashMap<>();
+            HashMap<Spatial_Feature,Integer> map_neigh=new HashMap<>();
+            HashMap<Spatial_Feature,Double> map_label=new HashMap<>();
             for (Spatial_Feature f:spatial_feature_rdd.collect())
             {
-                map.put(f,0);
+                map_neigh.put(f,0);
+                map_label.put(f,0D);
 
             }
-            neighbour_count_map.put(p,map);
+            neighbour_count_map.put(p,map_neigh);
+            label_set.put(p,map_label);
         }
         for (Spatial_Point p:points_rdd.collect()) {
             LinkedList<Spatial_Point> list_of_points_in_d=find_points_in_dist_d(dist_thresh,p,points_rdd);
             for(Spatial_Point point : list_of_points_in_d)
             {
-                
+                Spatial_Feature f=point.getFeature_type();
+                int prev_value=neighbour_count_map.get(p).get(f);
+                neighbour_count_map.get(p).replace(f,prev_value,prev_value+1);
+            }
+            for(Spatial_Point point : list_of_points_in_d)
+            {
+                double obj=1/neighbour_count_map.get(p).get(point.getFeature_type());
+                double prev_value=label_set.get(p).get(point.getFeature_type());
+                label_set.get(p).replace(point.getFeature_type(),prev_value+obj);
+
+
+            }
+            for(Spatial_Point point : list_of_points_in_d)
+            {
+                if(label_set.get(p).get(point.getFeature_type())>1)
+                {
+                    label_set.get(p).replace(point.getFeature_type(),1D);
+                }
             }
         }
+//        label_set_rdd=sc.para
+        
     }
 
 
