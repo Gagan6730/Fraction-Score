@@ -9,6 +9,7 @@ import shapeless.Tuple;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Random;
 
 class Spatial_Feature implements Serializable{
@@ -94,28 +95,31 @@ public class FractionScore {
     }
     public static void FractionComputation(JavaRDD<Spatial_Point> points_rdd,JavaRDD<Spatial_Feature> spatial_feature_rdd, int dist_thresh,JavaSparkContext sc)
     {
-        HashMap<Spatial_Point,HashMap<Spatial_Feature,Integer>> neighbour_count_map=new HashMap<>();
-        HashMap<Spatial_Point,HashMap<Spatial_Feature,Double>> label_set=new HashMap<>();
+        List<Tuple2<Spatial_Point, List<Tuple2<Spatial_Feature,Integer>>>> neighbour_count_map=new LinkedList<>();
+        List<Tuple2<Spatial_Point, List<Tuple2<Spatial_Feature,Double>>>> label_set=new LinkedList<>();
         JavaPairRDD<Spatial_Point, HashMap<Spatial_Feature,Double>> label_set_rdd;
         for (Spatial_Point p:points_rdd.collect()) {
-            HashMap<Spatial_Feature,Integer> map_neigh=new HashMap<>();
-            HashMap<Spatial_Feature,Double> map_label=new HashMap<>();
+            List<Tuple2<Spatial_Feature,Integer>> map_neigh=new LinkedList<>();
+            List<Tuple2<Spatial_Feature,Double>> map_label=new LinkedList<>();
             for (Spatial_Feature f:spatial_feature_rdd.collect())
             {
-                map_neigh.put(f,0);
-                map_label.put(f,0D);
+                map_neigh.add(new Tuple2<>(f,0));
+                map_label.add(new Tuple2<>(f,0D));
 
             }
-            neighbour_count_map.put(p,map_neigh);
-            label_set.put(p,map_label);
+            neighbour_count_map.add(new Tuple2<>(p,map_neigh));
+            label_set.add(new Tuple2<>(p,map_label));
         }
-        for (Spatial_Point p:points_rdd.collect()) {
+        points_rdd.count()
+        for (int i=0;i<neighbour_count_map.size();i++) {
             LinkedList<Spatial_Point> list_of_points_in_d=find_points_in_dist_d(dist_thresh,p,points_rdd);
             for(Spatial_Point point : list_of_points_in_d)
             {
                 Spatial_Feature f=point.getFeature_type();
-                int prev_value=neighbour_count_map.get(p).get(f);
-                neighbour_count_map.get(p).replace(f,prev_value,prev_value+1);
+                int prev_value=neighbour_count_map.get(i)._2().
+//                        get(p).get(f);
+                neighbour_count_map.get(i)._2().get()
+//                        .replace(f,prev_value,prev_value+1);
             }
             for(Spatial_Point point : list_of_points_in_d)
             {
@@ -134,7 +138,7 @@ public class FractionScore {
             }
         }
 //        label_set_rdd=sc.para
-        
+
     }
 
 
