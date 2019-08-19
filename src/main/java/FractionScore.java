@@ -73,7 +73,7 @@ public class FractionScore {
 
         return Math.sqrt(diff_x+diff_y);
     }
-    public static LinkedList<Spatial_Point> find_points_in_dist_d(int d,Spatial_Point point,List<Tuple2<Spatial_Point, HashMap<Spatial_Feature,Integer>>> neighbour_count_map)
+    public static LinkedList<Spatial_Point> find_points_in_dist_d(int d,Spatial_Point point,List<Tuple2<Spatial_Point, HashMap<String,Integer>>> neighbour_count_map)
     {
         LinkedList<Spatial_Point> list_of_points_in_d=new LinkedList<>();
         for (int i=0;i<neighbour_count_map.size();i++)
@@ -92,33 +92,34 @@ public class FractionScore {
         }
         return list_of_points_in_d;
     }
-    public static List<Tuple2<Spatial_Point, HashMap<Spatial_Feature,Double>>> FractionComputation(JavaRDD<Spatial_Point> points_rdd,JavaRDD<Spatial_Feature> spatial_feature_rdd, int dist_thresh)
+    public static List<Tuple2<Spatial_Point, HashMap<String,Double>>> FractionComputation(JavaRDD<Spatial_Point> points_rdd,JavaRDD<Spatial_Feature> spatial_feature_rdd, int dist_thresh)
     {
-        List<Tuple2<Spatial_Point, HashMap<Spatial_Feature,Integer>>> neighbour_count_map=new LinkedList<>();
-        List<Tuple2<Spatial_Point, HashMap<Spatial_Feature,Double>>> label_set=new LinkedList<>();
+        List<Tuple2<Spatial_Point, HashMap<String,Integer>>> neighbour_count_map=new LinkedList<>();
+        List<Tuple2<Spatial_Point, HashMap<String,Double>>> label_set=new LinkedList<>();
 //        JavaPairRDD<Spatial_Point, HashMap<Spatial_Feature,Double>> label_set_rdd;
         for (Spatial_Point p:points_rdd.collect()) {
-            HashMap<Spatial_Feature,Integer> map_neigh=new HashMap<>();
-            HashMap<Spatial_Feature,Double> map_label=new HashMap<>();
+            HashMap<String,Integer> map_neigh=new HashMap<>();
+            HashMap<String,Double> map_label=new HashMap<>();
             for (Spatial_Feature f:spatial_feature_rdd.collect())
             {
-                map_neigh.put(f,0);
-                map_label.put(f,0D);
+                map_neigh.put(f.getFeature_name(),0);
+                map_label.put(f.getFeature_name(),0D);
 
             }
             neighbour_count_map.add(new Tuple2<>(p,map_neigh));
             label_set.add(new Tuple2<>(p,map_label));
         }
 //        for (int i=0;i<neighbour_count_map.size();i++) {
-//            Tuple2<Spatial_Point, HashMap<Spatial_Feature, Integer>> spatial_pointHashMapTuple2=neighbour_count_map.get(i);
+//            Tuple2<Spatial_Point, HashMap<String, Integer>> spatial_pointHashMapTuple2=neighbour_count_map.get(i);
 //            Spatial_Point p=spatial_pointHashMapTuple2._1;
-//            HashMap<Spatial_Feature, Integer> map=spatial_pointHashMapTuple2._2;
+//            HashMap<String, Integer> map=spatial_pointHashMapTuple2._2;
 //            System.out.println(p.getFeature_type().getFeature_name()+" "+p.getX()+" "+p.getY());
-//            for(Map.Entry m:map.entrySet())
-//            {
-//                Spatial_Feature f= (Spatial_Feature) m.getKey();
-//                System.out.println("   "+f.getFeature_name()+" "+m.getValue());
-//            }
+////            for(Map.Entry m:map.entrySet())
+////            {
+////                Spatial_Feature f= (Spatial_Feature) m.getKey();
+////                System.out.println("   "+f.getFeature_name()+" "+m.getValue());
+////            }
+//            System.out.println(spatial_pointHashMapTuple2._2.get(p.getFeature_type().getFeature_name()));
 //        }
 
         for (int i=0;i<neighbour_count_map.size();i++) {
@@ -126,23 +127,20 @@ public class FractionScore {
             for(Spatial_Point point : list_of_points_in_d)
             {
                 Spatial_Feature f=point.getFeature_type();
-                int prev_value=neighbour_count_map.get(i)._2.get(f);
-                System.out.println(prev_value);
-                neighbour_count_map.get(i)._2.replace(f,prev_value+1);
+                int prev_value=neighbour_count_map.get(i)._2.get(f.getFeature_name());
+                neighbour_count_map.get(i)._2.replace(f.getFeature_name(),prev_value+1);
             }
             for(Spatial_Point point : list_of_points_in_d)
             {
-                double obj=1/neighbour_count_map.get(i)._2.get(point.getFeature_type());
-                double prev_value=label_set.get(i)._2.get(point.getFeature_type());
-                label_set.get(i)._2.replace(point.getFeature_type(),prev_value+obj);
-
-
+                double obj=1/(double)neighbour_count_map.get(i)._2.get(point.getFeature_type().getFeature_name());
+                double prev_value=label_set.get(i)._2.get(point.getFeature_type().getFeature_name());
+                label_set.get(i)._2.replace(point.getFeature_type().getFeature_name(),prev_value+obj);
             }
             for(Spatial_Point point : list_of_points_in_d)
             {
-                if(label_set.get(i)._2.get(point.getFeature_type())>1)
+                if(label_set.get(i)._2.get(point.getFeature_type().getFeature_name())>1)
                 {
-                    label_set.get(i)._2.replace(point.getFeature_type(),1D);
+                    label_set.get(i)._2.replace(point.getFeature_type().getFeature_name(),1D);
                 }
             }
         }
@@ -193,17 +191,17 @@ public class FractionScore {
 //            System.out.println(f.getFeature_name());
 //        }
         System.out.println("LABELS RDD");
-        JavaPairRDD<Spatial_Point, HashMap<Spatial_Feature,Double>> label_set_rdd=sc.parallelizePairs(FractionComputation(points_rdd,spatial_feature_rdd,25));
-        label_set_rdd.foreach(new VoidFunction<Tuple2<Spatial_Point, HashMap<Spatial_Feature, Double>>>() {
+        JavaPairRDD<Spatial_Point, HashMap<String,Double>> label_set_rdd=sc.parallelizePairs(FractionComputation(points_rdd,spatial_feature_rdd,25));
+        label_set_rdd.foreach(new VoidFunction<Tuple2<Spatial_Point, HashMap<String, Double>>>() {
             @Override
-            public void call(Tuple2<Spatial_Point, HashMap<Spatial_Feature, Double>> spatial_pointHashMapTuple2) throws Exception {
+            public void call(Tuple2<Spatial_Point, HashMap<String, Double>> spatial_pointHashMapTuple2) throws Exception {
                 Spatial_Point p=spatial_pointHashMapTuple2._1;
-                HashMap<Spatial_Feature, Double> map=spatial_pointHashMapTuple2._2;
+                HashMap<String, Double> map=spatial_pointHashMapTuple2._2;
                 System.out.println(p.getFeature_type().getFeature_name()+" "+p.getX()+" "+p.getY());
                 for(Map.Entry m:map.entrySet())
                 {
-                    Spatial_Feature f= (Spatial_Feature) m.getKey();
-                    System.out.println("   "+f.getFeature_name()+" "+m.getValue());
+//                    String f= (Spatial_Feature) m.getKey();
+                    System.out.println("   "+m.getKey()+" "+m.getValue());
                 }
             }
         });
