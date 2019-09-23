@@ -149,62 +149,69 @@ public class FractionScore {
 
     }
 
-
+    public static Object create_Object(String line)
+    {
+        String values [] = line.split(" ");
+        Object o = new Object(values[0],Integer.parseInt(values[1]), Double.parseDouble(values[2]), Double.parseDouble(values[3]) );
+        return o;
+    }
 
     public static void main(String args[])
     {
-        Random random=new Random();
-        // adding point to the list
-        LinkedList<Spatial_Point> points_lists=new LinkedList<Spatial_Point>();//list of all the points
-        for(int i=0;i<20;i++)
-        {
-            int x=random.nextInt(100);
-            int y=random.nextInt(100);
-            points_lists.add(new Spatial_Point(x,y));
-        }
-        String[] arr={"A","B","C","D"};
-        LinkedList<Spatial_Feature> spatial_features=new LinkedList<Spatial_Feature>();//set of all spatial features
-        for(int i=0;i<arr.length;i++)
-        {
-            Spatial_Feature f=new Spatial_Feature(arr[i]);
-            spatial_features.add(f);
-        }
-
-        for(int i=0;i<points_lists.size();i++)
-        {
-            int ind=random.nextInt(spatial_features.size());
-
-            points_lists.get(i).setFeature_type(spatial_features.get(ind));
-//            System.out.println(points_lists.get(i).getFeature_type().getFeature_name()+" "+points_lists.get(i).getX()+" "+points_lists.get(i).getY());
-        }
+//        Random random=new Random();
+//        // adding point to the list
+//        LinkedList<Spatial_Point> points_lists=new LinkedList<Spatial_Point>();//list of all the points
+//        for(int i=0;i<20;i++)
+//        {
+//            int x=random.nextInt(100);
+//            int y=random.nextInt(100);
+//            points_lists.add(new Spatial_Point(x,y));
+//        }
+//        String[] arr={"A","B","C","D"};
+//        LinkedList<Spatial_Feature> spatial_features=new LinkedList<Spatial_Feature>();//set of all spatial features
+//        for(int i=0;i<arr.length;i++)
+//        {
+//            Spatial_Feature f=new Spatial_Feature(arr[i]);
+//            spatial_features.add(f);
+//        }
+//
+//        for(int i=0;i<points_lists.size();i++)
+//        {
+//            int ind=random.nextInt(spatial_features.size());
+//
+//            points_lists.get(i).setFeature_type(spatial_features.get(ind));
+////            System.out.println(points_lists.get(i).getFeature_type().getFeature_name()+" "+points_lists.get(i).getX()+" "+points_lists.get(i).getY());
+//        }
         SparkSession spark= SparkSession.builder()
                 .master("local")
                 .appName("BDAProject")
                 .getOrCreate();
-        JavaSparkContext sc=new JavaSparkContext(spark.sparkContext());
-        JavaRDD<Spatial_Point> points_rdd=sc.parallelize(points_lists);
-        JavaRDD<Spatial_Feature> spatial_feature_rdd=sc.parallelize(spatial_features);
-//        for(Spatial_Point person : points_rdd.collect()){
-//            System.out.println(person.getFeature_type().getFeature_name()+" "+person.getX()+" "+person.getY());
-//        }
-//        for(Spatial_Feature f : spatial_feature_rdd.collect()){
-//            System.out.println(f.getFeature_name());
-//        }
-        System.out.println("LABELS RDD");
-        JavaPairRDD<Spatial_Point, HashMap<String,Double>> label_set_rdd=sc.parallelizePairs(FractionComputation(points_rdd,spatial_feature_rdd,25));
-        label_set_rdd.foreach(new VoidFunction<Tuple2<Spatial_Point, HashMap<String, Double>>>() {
+        JavaSparkContext sc = new JavaSparkContext(spark.sparkContext());
+
+        JavaRDD<String> lines = sc.textFile("data.txt");
+
+        JavaRDD<Object> allSpatialObjects = lines.map(x -> create_Object(x));
+        allSpatialObjects.foreach(new VoidFunction<Object>() {
             @Override
-            public void call(Tuple2<Spatial_Point, HashMap<String, Double>> spatial_pointHashMapTuple2) throws Exception {
-                Spatial_Point p=spatial_pointHashMapTuple2._1;
-                HashMap<String, Double> map=spatial_pointHashMapTuple2._2;
-                System.out.println(p.getFeature_type().getFeature_name()+" "+p.getX()+" "+p.getY());
-                for(Map.Entry m:map.entrySet())
-                {
-//                    String f= (Spatial_Feature) m.getKey();
-                    System.out.println("   "+m.getKey()+" "+m.getValue());
-                }
+            public void call(Object object) throws Exception {
+                System.out.println(object.event_type+object.instance_id+" "+object.x+" "+object.y);
             }
         });
+//        System.out.println("LABELS RDD");
+//        JavaPairRDD<Spatial_Point, HashMap<String,Double>> label_set_rdd=sc.parallelizePairs(FractionComputation(points_rdd,spatial_feature_rdd,25));
+//        label_set_rdd.foreach(new VoidFunction<Tuple2<Spatial_Point, HashMap<String, Double>>>() {
+//            @Override
+//            public void call(Tuple2<Spatial_Point, HashMap<String, Double>> spatial_pointHashMapTuple2) throws Exception {
+//                Spatial_Point p=spatial_pointHashMapTuple2._1;
+//                HashMap<String, Double> map=spatial_pointHashMapTuple2._2;
+//                System.out.println(p.getFeature_type().getFeature_name()+" "+p.getX()+" "+p.getY());
+//                for(Map.Entry m:map.entrySet())
+//                {
+////                    String f= (Spatial_Feature) m.getKey();
+//                    System.out.println("   "+m.getKey()+" "+m.getValue());
+//                }
+//            }
+//        });
 
 
     }
