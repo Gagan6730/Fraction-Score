@@ -10,6 +10,7 @@ import org.omg.PortableInterceptor.SYSTEM_EXCEPTION;
 import scala.Tuple2;
 import shapeless.Tuple;
 
+import java.io.DataOutput;
 import java.io.Serializable;
 import java.util.*;
 import java.util.function.BiConsumer;
@@ -181,6 +182,29 @@ public class FractionScore {
         }
         return labelSetValue;
     }
+
+    static Double SupportComputation(ArrayList<String> labelSet, JavaRDD<Object> allSpatialObjects, HashMap<Object, HashMap<String,Double>> label_set_rdd )
+    {
+        List<Object> allSpatialPoints=allSpatialObjects.collect();
+        double minSup= Double.MAX_VALUE;
+        for(String label:labelSet)
+        {
+            double sup=0;
+            for(Object o:allSpatialPoints)
+            {
+                if(/*RI*/true)
+                {
+                    sup+=FractionAggregation(labelSet,o,allSpatialObjects,label_set_rdd);
+                }
+            }
+            if(minSup<sup)
+            {
+                minSup=sup;
+            }
+        }
+        return minSup;
+
+    }
     public static Object create_Object(String line)
     {
         String values [] = line.split(" ");
@@ -188,7 +212,7 @@ public class FractionScore {
         return o;
     }
 
-    public static void main(String args[])
+    public static void main(String[] args)
     {
         SparkSession spark= SparkSession.builder()
                 .master("local")
