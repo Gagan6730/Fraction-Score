@@ -82,19 +82,23 @@ public class FractionScore {
         return Math.sqrt(diff_x + diff_y);
     }
 
-    public static LinkedList<Object> find_points_in_dist_d(double d, Object point, HashMap<Object, HashMap<String, Integer>> neighbour_count_map) {
-        LinkedList<Object> list_of_points_in_d = new LinkedList<>();
-        for (Object o : neighbour_count_map.keySet()) {
-            if (o.equals(point)) {
-                continue;
-            } else {
-                if (calca_dist(o, point) <= d) {
-                    list_of_points_in_d.add(o);
+
+    public static JavaRDD<Object> find_points_in_dist_d(double d, Object point, HashMap<Object, HashMap<String, Integer>> neighbour_count_map,JavaRDD<Object> points_rdd) {
+
+        JavaRDD<Object> pointsInDistD=points_rdd.filter(new Function<Object, Boolean>() {
+            @Override
+            public Boolean call(Object object) throws Exception {
+                if(calca_dist(point,object)<=d)
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
                 }
             }
-        }
-
-        return list_of_points_in_d;
+        });
+        return pointsInDistD;
     }
 
     public static HashMap<Object, HashMap<String, Double>> FractionComputation(JavaRDD<Object> points_rdd, JavaRDD<String> spatial_feature_rdd, double dist_thresh) {
@@ -134,58 +138,61 @@ public class FractionScore {
         });
 
 
-        for (Object p : allSpatialPoints) {
-            HashMap<String, Integer> map_neigh = new HashMap<>();
-            HashMap<String, Double> map_label = new HashMap<>();
-            for (String f : allSpatialFeatures) {
-                map_neigh.put(f, 0);
-                map_label.put(f, 0D);
+        
 
-            }
-            neighbour_count_map.put(p, map_neigh);
-            label_set.put(p, map_label);
-//            System.out.println("Neighbour map" + neighbour_count_map.get(p).size());
-        }
-//        System.out.println(neighbour_count_map.size());
-//        for (Object p:points_rdd.collect()) {
+
+//        for (Object p : allSpatialPoints) {
+//            HashMap<String, Integer> map_neigh = new HashMap<>();
+//            HashMap<String, Double> map_label = new HashMap<>();
+//            for (String f : allSpatialFeatures) {
+//                map_neigh.put(f, 0);
+//                map_label.put(f, 0D);
 //
-//            System.out.println("Neighbour map" + neighbour_count_map.get(p).size());
+//            }
+//            neighbour_count_map.put(p, map_neigh);
+//            label_set.put(p, map_label);
+////            System.out.println("Neighbour map" + neighbour_count_map.get(p).size());
 //        }
-//        System.out.println("points");
-//        for (Object p:allSpatialPoints) {
-//            System.out.println(p);
+////        System.out.println(neighbour_count_map.size());
+////        for (Object p:points_rdd.collect()) {
+////
+////            System.out.println("Neighbour map" + neighbour_count_map.get(p).size());
+////        }
+////        System.out.println("points");
+////        for (Object p:allSpatialPoints) {
+////            System.out.println(p);
+////        }
+////        System.out.println("neigh");
+////        for(Map.Entry m:neighbour_count_map.entrySet())
+////        {
+////            System.out.println(m.getKey());
+////        }
+//
+//
+//        for (Object o : allSpatialPoints) {
+//            LinkedList<Object> list_of_points_in_d = find_points_in_dist_d(dist_thresh, o, neighbour_count_map);
+////            System.out.println("val="+list_of_points_in_d.size());
+//            for (Object o_dash : list_of_points_in_d) {
+//                String str = o_dash.event_type;
+//                int val = neighbour_count_map.get(o).get(str);
+//                neighbour_count_map.get(o).replace(str, val + 1);
+//            }
+//
+//
+//            for (Object o_dash : list_of_points_in_d) {
+//                String str = o.event_type;
+//                int v = neighbour_count_map.get(o).get(str);
+//                double obj = 1D / neighbour_count_map.get(o).get(str);
+////                System.out.println(v+" "+obj);
+//
+//                label_set.get(o_dash).replace(str, label_set.get(o_dash).get(str), label_set.get(o_dash).get(str) + obj);
+//                if (label_set.get(o_dash).get(str) > 1) {
+//                    label_set.get(o_dash).replace(str, 1D);
+//                }
+//            }
 //        }
-//        System.out.println("neigh");
-//        for(Map.Entry m:neighbour_count_map.entrySet())
-//        {
-//            System.out.println(m.getKey());
-//        }
-
-
-        for (Object o : allSpatialPoints) {
-            LinkedList<Object> list_of_points_in_d = find_points_in_dist_d(dist_thresh, o, neighbour_count_map);
-//            System.out.println("val="+list_of_points_in_d.size());
-            for (Object o_dash : list_of_points_in_d) {
-                String str = o_dash.event_type;
-                int val = neighbour_count_map.get(o).get(str);
-                neighbour_count_map.get(o).replace(str, val + 1);
-            }
-
-
-            for (Object o_dash : list_of_points_in_d) {
-                String str = o.event_type;
-                int v = neighbour_count_map.get(o).get(str);
-                double obj = 1D / neighbour_count_map.get(o).get(str);
-//                System.out.println(v+" "+obj);
-
-                label_set.get(o_dash).replace(str, label_set.get(o_dash).get(str), label_set.get(o_dash).get(str) + obj);
-                if (label_set.get(o_dash).get(str) > 1) {
-                    label_set.get(o_dash).replace(str, 1D);
-                }
-            }
-        }
-
-        return label_set;
+//
+//        return label_set;
 
     }
 
