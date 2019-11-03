@@ -1,3 +1,4 @@
+import org.apache.hadoop.yarn.webapp.hamlet.Hamlet;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
@@ -83,6 +84,21 @@ public class FractionScore {
         return Math.sqrt(diff_x + diff_y);
     }
 
+    static Comparator<Double> increasing=new Comparator<Double>() {
+        @Override
+        public int compare(Double o1, Double o2) {
+            if(o1-o2<0)
+            {
+                return -1;
+            }else if(o1-o2>0)
+            {
+                return 1;
+            }
+            else {
+                return 0;
+            }
+        }
+    };
 
     public static JavaRDD<Object> find_points_in_dist_d(double d, Object point,JavaRDD<Object> points_rdd) {
 
@@ -107,40 +123,6 @@ public class FractionScore {
     }
 
     public static JavaPairRDD<Object, JavaPairRDD<String, Double>> FractionComputation(JavaRDD<Object> points_rdd, JavaRDD<String> spatial_feature_rdd, double dist_thresh) {
-//        List<Object> allSpatialPoints = points_rdd.collect();
-//        List<String> allSpatialFeatures = spatial_feature_rdd.collect();
-//        HashMap<Object, HashMap<String, Integer>> neighbour_count_map = new HashMap<>();
-//        HashMap<Object, HashMap<String, Double>> label_set = new HashMap<>();
-//        JavaPairRDD<Spatial_Point, HashMap<Spatial_Feature,Double>> label_set_rdd;
-//        JavaPairRDD<Object, JavaPairRDD<String, Double>> label_set_rdd=points_rdd.mapToPair(new PairFunction<Object, Object, JavaPairRDD<String, Double>>() {
-//
-//            @Override
-//            public Tuple2<Object, JavaPairRDD<String, Double>> call(Object object) throws Exception {
-//                JavaPairRDD<String,Double> pairRDD=spatial_feature_rdd.mapToPair(new PairFunction<String, String, Double>() {
-//                    @Override
-//                    public Tuple2<String, Double> call(String s) throws Exception {
-//                        return new Tuple2<String, Double>(s,0D);
-//                    }
-//                });
-//
-//
-//                return new Tuple2<Object, JavaPairRDD<String, Double>>(object,pairRDD);
-//            }
-//        });
-//        JavaPairRDD<Object, JavaPairRDD<String, Integer>> neighbour_set_rdd=points_rdd.mapToPair(new PairFunction<Object, Object, JavaPairRDD<String, Integer>>() {
-//
-//            @Override
-//            public Tuple2<Object, JavaPairRDD<String, Integer>> call(Object object) throws Exception {
-//                JavaPairRDD<String,Integer> pairRDD=spatial_feature_rdd.mapToPair(new PairFunction<String, String, Integer>() {
-//                    @Override
-//                    public Tuple2<String, Integer> call(String s) throws Exception {
-//                        return new Tuple2<String, Integer>(s,0);
-//                    }
-//                });
-//
-//                return new Tuple2<Object, JavaPairRDD<String, Integer>>(object,pairRDD);
-//            }
-//        });
 
         JavaPairRDD<Object, JavaRDD<String>> neighbour_set_rdd=points_rdd.mapToPair(new PairFunction<Object, Object, JavaRDD<String>>() {
 
@@ -159,8 +141,6 @@ public class FractionScore {
             public Tuple2<Object, JavaPairRDD<String, Double>> call(Object object) throws Exception {
                 //object==D1
                 String type=object.event_type;
-
-//                neighbour_set_rdd.cache();
 
                 JavaRDD<Object> pointsInDistD=find_points_in_dist_d(dist_thresh,object,points_rdd);
                 JavaPairRDD<String,Long> eventTypeRdd=pointsInDistD.mapToPair(new PairFunction<Object,String, Long>() {
@@ -184,13 +164,10 @@ public class FractionScore {
                                 return s.equals(type);
                             }
                         }).count();
-//                        int val=0;
-//                        rdd.filter()
-//                        rdd.mapToPair(word -> new Tuple2<>(word, 1))
-//                                .reduceByKey((a, b) -> a + b);
-                        return new Tuple2<String, Long>(o.event_type,count);
+
+                        return new Tuple2<>(o.event_type, count);
                     }
-                }).reduceByKey((a,b)->a+b);
+                }).reduceByKey(Long::sum);
 
 
 
@@ -206,62 +183,44 @@ public class FractionScore {
                 return new Tuple2<>(object,labelOfEachEvent);
             }
         });
-
-//        neighbour_set_rdd.mapToPair(new PairFunction<Tuple2<Object, JavaPairRDD<String, Integer>>, String, Integer>() {
-//            @Override
-//            public Tuple2<String, Integer> call(Tuple2<Object, JavaPairRDD<String, Integer>> tuple) throws Exception {
-//
-//                return null;
-//            }
-//        });
-
-
-
-//
-//        for (Object o : allSpatialPoints) {
-//            LinkedList<Object> list_of_points_in_d = new LinkedList<>();
-//////            System.out.println("val="+list_of_points_in_d.size());
-////            for (Object o_dash : list_of_points_in_d) {
-////                String str = o_dash.event_type;
-////                int val = neighbour_count_map.get(o).get(str);
-////                neighbour_count_map.get(o).replace(str, val + 1);
-////            }
-//
-//
-//            for (Object o_dash : list_of_points_in_d) {
-//                String str = o.event_type;
-//                int v = neighbour_count_map.get(o_dash).get(str);
-//                double obj = 1D / neighbour_count_map.get(o_dash).get(str);
-////                System.out.println(v+" "+obj);
-//
-//                label_set.get(o_dash).replace(str, label_set.get(o_dash).get(str), label_set.get(o_dash).get(str) + obj);
-//                if (label_set.get(o_dash).get(str) > 1) {
-//                    label_set.get(o_dash).replace(str, 1D);
-//                }
-//            }
-//        }
-//
-//        return label_set;
-
         return label_set_rdd;
 
     }
 
-    public static Double FractionAggregation(ArrayList<String> labelSet, Object o, JavaRDD<Object> allSpatialObjects, HashMap<Object, HashMap<String, Double>> label_set_rdd) {
+    public static Double FractionAggregation(JavaRDD<String> candidateColocationRdd, Object o, JavaRDD<Object> allSpatialObjects, JavaPairRDD<Object, JavaPairRDD<String, Double>> label_set_rdd) {
         String label = o.event_type;
 
-        double labelSetValue = Double.MAX_VALUE;
+//        double labelSetValue = Double.MAX_VALUE;
+        HashSet<String> setOfDistinctLabels=new HashSet<>();
+        candidateColocationRdd.filter(new Function<String, Boolean>() {
+            @Override
+            public Boolean call(String s) throws Exception {
+                if(s.equals(label))
+                {
+                    return false;
+                }
+                else {
+                    return true;
+                }
+
+            }
+        }).foreach((VoidFunction<String>) s -> setOfDistinctLabels.add(s));
+
+        JavaPairRDD<String,Double> labelsForObjectO=label_set_rdd.filter(tuple2 -> o.equalsTo(tuple2._1)).values().first();
+        return labelsForObjectO.filter( tuple2 -> {
+            if(label.equals(tuple2._1))
+            {
+                return false;
+            }
+            else {
+                return true;
+            }
+        }).map(t->t._2).min(increasing);
+
+//        return labelSetValue;
 
         //iterating over the labelSet,i.e., the candidate co-location
-        for (String str : labelSet) {
-            if (!str.equals(label)) {
-                double val = label_set_rdd.get(o).get(str);
-                if (val < labelSetValue) {
-                    labelSetValue = val;
-                }
-            }
-        }
-        return labelSetValue;
+
     }
 
     static Double SupportComputation(ArrayList<String> labelSet, JavaRDD<Object> allSpatialObjects, HashMap<Object, HashMap<String, Double>> label_set_rdd) {
@@ -271,7 +230,7 @@ public class FractionScore {
             double sup = 0;
             for (Object o : allSpatialPoints) {
                 if (/*RI*/true) {
-                    sup += FractionAggregation(labelSet, o, allSpatialObjects, label_set_rdd);
+//                    sup += FractionAggregation(labelSet, o, allSpatialObjects, label_set_rdd);
                 }
             }
             if (minSup < sup) {

@@ -14,7 +14,19 @@ public class Object implements Serializable {
         this.y = y;
     }
 
-//	public Object(String event_type, int instance_id, double x, double y, GridNo grd_num) {
+
+    public boolean equalsTo(Object obj) {
+        if(this.event_type.equals(obj.event_type) && this.instance_id==obj.instance_id)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+
+    }
+    //	public Object(String event_type, int instance_id, double x, double y, GridNo grd_num) {
 //		this.event_type = event_type;
 //		this.instance_id = instance_id;
 //		this.x = x;
