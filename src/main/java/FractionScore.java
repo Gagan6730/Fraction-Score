@@ -7,6 +7,7 @@ import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.PairFunction;
 import org.apache.spark.api.java.function.VoidFunction;
 import org.apache.spark.sql.SparkSession;
+//import org.apache.spark.i
 import org.apache.spark.sql.sources.In;
 import org.codehaus.janino.Java;
 import org.omg.PortableInterceptor.SYSTEM_EXCEPTION;
@@ -124,15 +125,11 @@ public class FractionScore {
 
     public static JavaPairRDD<Object, JavaPairRDD<String, Double>> FractionComputation(JavaRDD<Object> points_rdd, JavaRDD<String> spatial_feature_rdd, double dist_thresh) {
 
-        JavaPairRDD<Object, JavaRDD<String>> neighbour_set_rdd=points_rdd.mapToPair(new PairFunction<Object, Object, JavaRDD<String>>() {
+        JavaPairRDD<Object, JavaRDD<String>> neighbour_set_rdd=points_rdd.mapToPair((PairFunction<Object, Object, JavaRDD<String>>) object -> {
+            JavaRDD<Object> pointsInDistD=find_points_in_dist_d(dist_thresh,object,points_rdd);
 
-            @Override
-            public Tuple2<Object, JavaRDD<String>> call(Object object) throws Exception {
-                JavaRDD<Object> pointsInDistD=find_points_in_dist_d(dist_thresh,object,points_rdd);
-
-                JavaRDD<String> countOfEachEventType=pointsInDistD.map(x->x.event_type);
-                return new Tuple2<>(object,countOfEachEventType);
-            }
+            JavaRDD<String> countOfEachEventType=pointsInDistD.map(x->x.event_type);
+            return new Tuple2<>(object,countOfEachEventType);
         });
 
 
@@ -223,14 +220,99 @@ public class FractionScore {
 
     }
 
-    static Double SupportComputation(ArrayList<String> labelSet, JavaRDD<Object> allSpatialObjects, HashMap<Object, HashMap<String, Double>> label_set_rdd) {
+    static boolean CombinatorialSearch(Object o, JavaRDD<Object> points_rdd, double dist_thresh, JavaRDD<String> candidateColocation)
+    {
+        //colocation without label type of object o
+        JavaRDD<String> colocation=candidateColocation.filter(s -> !s.equals(o.event_type));
+        HashSet<String> set = new HashSet<>(colocation.collect());
+        String event=candidateColocation.first();
+
+        //points in dist d of object o
+        JavaRDD<Object> pointsInDistD=find_points_in_dist_d(dist_thresh/2,o,points_rdd);
+
+        JavaRDD<Object> firstEventTypeObjects=pointsInDistD.filter(new Function<Object, Boolean>() {
+            @Override
+            public Boolean call(Object object) throws Exception {
+                return object.event_type.equals(event);
+            }
+        });
+
+        JavaRDD<Object> pointsInDistDInColoc=pointsInDistD.filter(new Function<Object, Boolean>() {
+            @Override
+            public Boolean call(Object object) throws Exception {
+                if(set.contains(object.event_type))
+                {
+                    if(object.event_type.equals(event))
+                    {
+                        return false;
+                    }
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+        });
+
+
+//        JavaRDD<Object> pointsInDistD2=find_points_in_dist_d(dist_thresh/2,o,points_rdd);
+        //pair list that seperates all objects in Disk(o,d) by their event type
+        JavaPairRDD<String,JavaRDD<Object>> pairEventObject=colocation.mapToPair(new PairFunction<String, String, JavaRDD<Object>>() {
+            @Override
+            public Tuple2<String, JavaRDD<Object>> call(String s) throws Exception {
+                JavaRDD<Object> rddOfEventS=pointsInDistDInColoc.filter(object-> object.event_type.equals(s));
+                return new Tuple2<>(s,rddOfEventS);
+            }
+        });
+
+
+        JavaRDD<JavaRDD<Object>> cartesianOfRDD=pairEventObject.map(new Function<Tuple2<String, JavaRDD<Object>>, JavaRDD<Object>>() {
+
+            @Override
+            public JavaRDD<Object> call(Tuple2<String, JavaRDD<Object>> stringJavaRDDTuple2) throws Exception {
+                return stringJavaRDDTuple2._2;
+            }
+        });
+
+
+
+        HashSet<String> labels=new HashSet<>();
+        pointsInDistD.foreach(new VoidFunction<Object>() {
+            @Override
+            public void call(Object object) throws Exception {
+                labels.add(object.event_type);
+            }
+        });
+        if(labels.size()==pointsInDistD.count())
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+
+        }
+//                .foreach(new VoidFunction<JavaRDD<Object>>() {
+//            @Override
+//            public void call(JavaRDD<Object> objectJavaRDD) throws Exception {
+//                firstEventTypeObjects.cartesian(objectJavaRDD);
+//            }
+//        })
+
+
+
+    }
+
+
+    static Double SupportComputation(ArrayList<String> labelSet, JavaRDD<Object> allSpatialObjects, JavaPairRDD<Object, JavaPairRDD<String, Double>> label_set_rdd,double dist_thresh,JavaSparkContext sc) {
         List<Object> allSpatialPoints = allSpatialObjects.collect();
         double minSup = Double.MAX_VALUE;
         for (String label : labelSet) {
             double sup = 0;
             for (Object o : allSpatialPoints) {
-                if (/*RI*/true) {
-//                    sup += FractionAggregation(labelSet, o, allSpatialObjects, label_set_rdd);
+                if (CombinatorialSearch(o,allSpatialObjects,dist_thresh,sc.parallelize(labelSet))) {
+                    sup += FractionAggregation(sc.parallelize(labelSet), o, allSpatialObjects, label_set_rdd);
                 }
             }
             if (minSup < sup) {
@@ -283,6 +365,15 @@ public class FractionScore {
                 System.out.println(s);
             }
         });
+
+        JavaPairRDD<Object, JavaPairRDD<String, Double>> fractionForEachLabel=FractionComputation(allSpatialObjects,allEventTypes,0.3);
+
+        double support=SupportComputation(new ArrayList<>(Arrays.asList("A","B","C")),allSpatialObjects,fractionForEachLabel,0.3,sc);
+
+        if(support>0.3)
+        {
+            System.out.println("ABC is a colocation");
+        }
 //        System.out.println("LABELS RDD");
 //        HashMap<Object, HashMap<String, Double>> label_set_rdd = FractionComputation(allSpatialObjects, allEventTypes, 0.2);
 //        label_set_rdd.foreach(new VoidFunction<Tuple2<Spatial_Point, HashMap<String, Double>>>() {
