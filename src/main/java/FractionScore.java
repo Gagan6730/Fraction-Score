@@ -101,9 +101,9 @@ public class FractionScore {
         }
     };
 
-    public static JavaRDD<Object> find_points_in_dist_d(double d, Object point,JavaRDD<Object> points_rdd) {
+    public static List<Object> find_points_in_dist_d(double d, Object point,JavaRDD<Object> points_rdd) {
 
-        JavaRDD<Object> pointsInDistD=points_rdd.filter(new Function<Object, Boolean>() {
+        return points_rdd.filter(new Function<Object, Boolean>() {
             @Override
             public Boolean call(Object object) throws Exception {
                 if(object.event_type.equals(point.event_type) && object.instance_id==point.instance_id)
@@ -119,72 +119,172 @@ public class FractionScore {
                     return false;
                 }
             }
-        });
-        return pointsInDistD;
+        }).collect();
     }
 
-    public static JavaPairRDD<Object, JavaPairRDD<String, Double>> FractionComputation(JavaRDD<Object> points_rdd, JavaRDD<String> spatial_feature_rdd, double dist_thresh) {
+    public static List<Object> find_points_in_dist_d(double d, Object point,List<Object> points_rdd) {
 
-        JavaPairRDD<Object, JavaRDD<String>> neighbour_set_rdd=points_rdd.mapToPair((PairFunction<Object, Object, JavaRDD<String>>) object -> {
-            JavaRDD<Object> pointsInDistD=find_points_in_dist_d(dist_thresh,object,points_rdd);
-
-            JavaRDD<String> countOfEachEventType=pointsInDistD.map(x->x.event_type);
-            return new Tuple2<>(object,countOfEachEventType);
-        });
-
-
-        JavaPairRDD<Object, JavaPairRDD<String, Double>> label_set_rdd=points_rdd.mapToPair(new PairFunction<Object, Object, JavaPairRDD<String, Double>>() {
-            @Override
-            public Tuple2<Object, JavaPairRDD<String, Double>> call(Object object) throws Exception {
-                //object==D1
-                String type=object.event_type;
-
-                JavaRDD<Object> pointsInDistD=find_points_in_dist_d(dist_thresh,object,points_rdd);
-                JavaPairRDD<String,Long> eventTypeRdd=pointsInDistD.mapToPair(new PairFunction<Object,String, Long>() {
-
-
-                    @Override
-                    public Tuple2<String, Long> call(Object o) throws Exception {
-                        long count=neighbour_set_rdd.map(new Function<Tuple2<Object, JavaRDD<String>>, JavaRDD<String>>() {
-
-                            @Override
-                            public JavaRDD<String> call(Tuple2<Object, JavaRDD<String>> tuple2) throws Exception {
-                                if(o.event_type.equals(tuple2._1.event_type) && o.instance_id==tuple2._1.instance_id)
-                                {
-                                    return tuple2._2;
-                                }
-                                return null;
-                            }
-                        }).first().filter(new Function<String, Boolean>() {
-                            @Override
-                            public Boolean call(String s) throws Exception {
-                                return s.equals(type);
-                            }
-                        }).count();
-
-                        return new Tuple2<>(o.event_type, count);
-                    }
-                }).reduceByKey(Long::sum);
-
-
-
-                JavaPairRDD<String,Double> labelOfEachEvent=eventTypeRdd.mapToPair(new PairFunction<Tuple2<String, Long>, String, Double>() {
-                    @Override
-                    public Tuple2<String, Double> call(Tuple2<String, Long> stringLongTuple2) throws Exception {
-                        Double obj=1D/stringLongTuple2._2;
-                        return new Tuple2<>(stringLongTuple2._1,obj) ;
-                    }
-                });
-
-
-                return new Tuple2<>(object,labelOfEachEvent);
+        List<Object> ans=new ArrayList<>();
+        for(Object o:points_rdd)
+        {
+            if(!o.equalsTo(point))
+            {
+                if(calca_dist(o,point)<=d)
+                {
+                    ans.add(o);
+                }
             }
-        });
-        return label_set_rdd;
+        }
+        return ans;
+    }
+    public static HashMap<Object, HashMap<String,Double>> FractionComputation(JavaRDD<Object> points_rdd, JavaRDD<String> spatial_feature_rdd, double dist_thresh) {
+
+//        List<Object> allPoints=points_rdd.collect();
+//        HashMap<Object,List<Object>> map=new HashMap<>();
+//        HashMap<Object, List<String>> neighbour_set=new HashMap<>();
+//
+//        for(Object object:allPoints)
+//        {
+//            List<Object> pointsInDistD=find_points_in_dist_d(dist_thresh,object,points_rdd).collect();
+//            map.put(object,pointsInDistD);
+//            List<String> labelInDistD=new ArrayList<>();
+//            for(Object o:pointsInDistD)
+//            {
+//                labelInDistD.add(o.event_type);
+//            }
+//            neighbour_set.put(object,labelInDistD);
+//        }
+//
+        List<Object> allSpatialPoints=points_rdd.collect();
+        List<String> allSpatialFeatures=spatial_feature_rdd.collect();
+        HashMap<Object, HashMap<String,Integer>> neighbour_count_map=new HashMap<>();
+        HashMap<Object, HashMap<String,Double>> label_set=new HashMap<>();
+//        JavaPairRDD<Spatial_Point, HashMap<Spatial_Feature,Double>> label_set_rdd;
+        for (Object p:allSpatialPoints) {
+            HashMap<String,Integer> map_neigh=new HashMap<>();
+            HashMap<String,Double> map_label=new HashMap<>();
+            for (String f:allSpatialFeatures)
+            {
+                map_neigh.put(f,0);
+                map_label.put(f,0D);
+
+            }
+            neighbour_count_map.put(p,map_neigh);
+            label_set.put(p,map_label);
+//            System.out.println("Neighbour map" + neighbour_count_map.get(p).size());
+        }
+//        System.out.println(neighbour_count_map.size());
+//        for (Object p:points_rdd.collect()) {
+//
+//            System.out.println("Neighbour map" + neighbour_count_map.get(p).size());
+//        }
+//        System.out.println("points");
+//        for (Object p:allSpatialPoints) {
+//            System.out.println(p);
+//        }
+//        System.out.println("neigh");
+//        for(Map.Entry m:neighbour_count_map.entrySet())
+//        {
+//            System.out.println(m.getKey());
+//        }
+
+        for (Object o:allSpatialPoints) {
+            List<Object> list_of_points_in_d=find_points_in_dist_d(dist_thresh,o,allSpatialPoints);
+//            System.out.println("val="+list_of_points_in_d.size());
+            for(Object o_dash:list_of_points_in_d)
+            {
+                String str=o_dash.event_type;
+                int val=neighbour_count_map.get(o).get(str);
+                neighbour_count_map.get(o).replace(str,val+1);
+            }
+
+
+            for(Object o_dash:list_of_points_in_d)
+            {
+                String str=o.event_type;
+                int v=neighbour_count_map.get(o).get(str);
+                double obj=1D/v;
+//                System.out.println(v+" "+obj);
+
+                label_set.get(o_dash).replace(str,label_set.get(o_dash).get(str),label_set.get(o_dash).get(str)+obj);
+                if(label_set.get(o_dash).get(str)>1)
+                {
+                    label_set.get(o_dash).replace(str,1D);
+                }
+            }
+        }
+
+        return label_set;
+
+
+//        return points_rdd.mapToPair(new PairFunction<Object, Object, JavaPairRDD<String, Double>>() {
+//            @Override
+//            public Tuple2<Object, JavaPairRDD<String, Double>> call(Object object) throws Exception {
+//                //object==D1
+//                String type=object.event_type;
+//                List<Object> pointsInDistD=new ArrayList<>();
+//                for(Object point:map.keySet())
+//                {
+//                    if(point.event_type.equals(type) && point.instance_id==object.instance_id)
+//                    {
+//                        pointsInDistD=map.get(point);
+//                        break;
+//                    }
+//                }
+//                HashMap<String,Long> eventTypeRdd=new HashMap<>();
+//
+//                for(Object o:pointsInDistD)
+//                {
+//                    eventTypeRdd.put(o.event_type,0L);
+//                }
+//                for(Object o:pointsInDistD)
+//                {
+//
+//                }
+//                        pointsInDistD.mapToPair(new PairFunction<Object,String, Long>() {
+//
+//
+//                    @Override
+//                    public Tuple2<String, Long> call(Object o) throws Exception {
+//                        long count=neighbour_set_rdd.map(new Function<Tuple2<Object, JavaRDD<String>>, JavaRDD<String>>() {
+//
+//                            @Override
+//                            public JavaRDD<String> call(Tuple2<Object, JavaRDD<String>> tuple2) throws Exception {
+//                                if(o.event_type.equals(tuple2._1.event_type) && o.instance_id==tuple2._1.instance_id)
+//                                {
+//                                    return tuple2._2;
+//                                }
+//                                return null;
+//                            }
+//                        }).first().filter(new Function<String, Boolean>() {
+//                            @Override
+//                            public Boolean call(String s) throws Exception {
+//                                return s.equals(type);
+//                            }
+//                        }).count();
+//
+//                        return new Tuple2<>(o.event_type, count);
+//                    }
+//                }).reduceByKey(Long::sum);
+//
+//
+//
+//                JavaPairRDD<String,Double> labelOfEachEvent=eventTypeRdd.mapToPair(new PairFunction<Tuple2<String, Long>, String, Double>() {
+//                    @Override
+//                    public Tuple2<String, Double> call(Tuple2<String, Long> stringLongTuple2) throws Exception {
+//                        Double obj=1D/stringLongTuple2._2;
+//                        return new Tuple2<>(stringLongTuple2._1,obj) ;
+//                    }
+//                });
+//
+//
+//                return new Tuple2<>(object,labelOfEachEvent);
+//            }
+//        });
 
     }
 
-    public static Double FractionAggregation(JavaRDD<String> candidateColocationRdd, Object o, JavaRDD<Object> allSpatialObjects, JavaPairRDD<Object, JavaPairRDD<String, Double>> label_set_rdd) {
+    public static Double FractionAggregation(JavaRDD<String> candidateColocationRdd, Object o, JavaRDD<Object> allSpatialObjects, JavaPairRDD<Object, List<Tuple2<String, Double>>> label_set_rdd) {
         String label = o.event_type;
 
 //        double labelSetValue = Double.MAX_VALUE;
@@ -203,24 +303,32 @@ public class FractionScore {
             }
         }).foreach((VoidFunction<String>) s -> setOfDistinctLabels.add(s));
 
-        JavaPairRDD<String,Double> labelsForObjectO=label_set_rdd.filter(tuple2 -> o.equalsTo(tuple2._1)).values().first();
-        return labelsForObjectO.filter( tuple2 -> {
-            if(label.equals(tuple2._1))
-            {
-                return false;
-            }
-            else {
-                return true;
-            }
-        }).map(t->t._2).min(increasing);
 
+        List<Tuple2<String, Double>> labelsForObjectO=new ArrayList<>();
+        for(Tuple2<Object,List<Tuple2<String,Double>>> t:label_set_rdd.collect())
+        {
+            if(o.equalsTo(t._1))
+            {
+                labelsForObjectO=new ArrayList<>(t._2);
+            }
+        }
+        double minLabelSet=Double.MAX_VALUE;
+        for(Tuple2<String, Double> t:labelsForObjectO)
+        {
+            if(!t._1.equals(label))
+            {
+                minLabelSet=Math.min(minLabelSet,t._2);
+            }
+        }
+
+        return minLabelSet;
 //        return labelSetValue;
 
         //iterating over the labelSet,i.e., the candidate co-location
 
     }
 
-    static boolean CombinatorialSearch(Object o, JavaRDD<Object> points_rdd, double dist_thresh, JavaRDD<String> candidateColocation)
+    static boolean CombinatorialSearch(Object o, JavaRDD<Object> points_rdd, double dist_thresh, JavaRDD<String> candidateColocation,JavaSparkContext sc)
     {
         //colocation without label type of object o
         JavaRDD<String> colocation=candidateColocation.filter(s -> !s.equals(o.event_type));
@@ -228,7 +336,7 @@ public class FractionScore {
         String event=candidateColocation.first();
 
         //points in dist d of object o
-        JavaRDD<Object> pointsInDistD=find_points_in_dist_d(dist_thresh/2,o,points_rdd);
+        JavaRDD<Object> pointsInDistD=sc.parallelize(find_points_in_dist_d(dist_thresh/2,o,points_rdd));
 
         JavaRDD<Object> firstEventTypeObjects=pointsInDistD.filter(new Function<Object, Boolean>() {
             @Override
@@ -305,13 +413,13 @@ public class FractionScore {
     }
 
 
-    static Double SupportComputation(ArrayList<String> labelSet, JavaRDD<Object> allSpatialObjects, JavaPairRDD<Object, JavaPairRDD<String, Double>> label_set_rdd,double dist_thresh,JavaSparkContext sc) {
+    static Double SupportComputation(ArrayList<String> labelSet, JavaRDD<Object> allSpatialObjects, JavaPairRDD<Object, List<Tuple2<String, Double>>> label_set_rdd,double dist_thresh,JavaSparkContext sc) {
         List<Object> allSpatialPoints = allSpatialObjects.collect();
         double minSup = Double.MAX_VALUE;
         for (String label : labelSet) {
             double sup = 0;
             for (Object o : allSpatialPoints) {
-                if (CombinatorialSearch(o,allSpatialObjects,dist_thresh,sc.parallelize(labelSet))) {
+                if (CombinatorialSearch(o,allSpatialObjects,dist_thresh,sc.parallelize(labelSet),sc)) {
                     sup += FractionAggregation(sc.parallelize(labelSet), o, allSpatialObjects, label_set_rdd);
                 }
             }
@@ -366,7 +474,22 @@ public class FractionScore {
             }
         });
 
-        JavaPairRDD<Object, JavaPairRDD<String, Double>> fractionForEachLabel=FractionComputation(allSpatialObjects,allEventTypes,0.3);
+        HashMap<Object, HashMap<String,Double>> labelSetRdd=FractionComputation(allSpatialObjects,allEventTypes,0.3);
+        List<Tuple2<Object,List<Tuple2<String,Double>>>> fractionComp=new ArrayList<>();
+
+        for(Object o:labelSetRdd.keySet())
+        {
+            HashMap<String,Double> map=labelSetRdd.get(o);
+            List<Tuple2<String,Double>> list=new ArrayList<>();
+            for(String s:map.keySet())
+            {
+                Tuple2<String,Double> t=new Tuple2<String,Double>(s,map.get(s));
+                list.add(t);
+            }
+            Tuple2<Object,List<Tuple2<String,Double>>> tuple2=new Tuple2<Object,List<Tuple2<String,Double>>>(o,list);
+            fractionComp.add(tuple2);
+        }
+        JavaPairRDD<Object, List<Tuple2<String, Double>>> fractionForEachLabel=sc.parallelizePairs(fractionComp);
 
         double support=SupportComputation(new ArrayList<>(Arrays.asList("A","B","C")),allSpatialObjects,fractionForEachLabel,0.3,sc);
 
