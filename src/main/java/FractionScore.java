@@ -14,8 +14,7 @@ import org.omg.PortableInterceptor.SYSTEM_EXCEPTION;
 import scala.Tuple2;
 import shapeless.Tuple;
 
-import java.io.DataOutput;
-import java.io.Serializable;
+import java.io.*;
 import java.util.*;
 import java.util.function.BiConsumer;
 
@@ -355,7 +354,7 @@ public class FractionScore {
     }
 
 
-    static Double SupportComputation(ArrayList<String> labelSet, JavaRDD<Object> allSpatialObjects, JavaPairRDD<Object, List<Tuple2<String, Double>>> label_set_rdd,double dist_thresh,JavaSparkContext sc) {
+    static Double SupportComputation(List<String> labelSet, JavaRDD<Object> allSpatialObjects, JavaPairRDD<Object, List<Tuple2<String, Double>>> label_set_rdd,double dist_thresh,JavaSparkContext sc) {
         List<Object> allSpatialPoints = allSpatialObjects.collect();
         double minSup = Double.MAX_VALUE;
         for (String label : labelSet) {
@@ -379,7 +378,7 @@ public class FractionScore {
         return o;
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         SparkSession spark = SparkSession.builder()
                 .master("local")
                 .appName("BDAProject")
@@ -395,28 +394,28 @@ public class FractionScore {
         /*
         printing all objects
          */
-        allSpatialObjects.foreach(new VoidFunction<Object>() {
-            @Override
-            public void call(Object object) throws Exception {
-                System.out.println(object.event_type +" "+ object.instance_id + " " + object.x + " " + object.y);
-            }
-        });
-
-
-        System.out.println("all event types");
+//        allSpatialObjects.foreach(new VoidFunction<Object>() {
+//            @Override
+//            public void call(Object object) throws Exception {
+//                System.out.println(object.event_type +" "+ object.instance_id + " " + object.x + " " + object.y);
+//            }
+//        });
+//
+//
+//        System.out.println("all event types");
         JavaRDD<String> allEventTypes = allSpatialObjects.map(new Function<Object, String>() {
             @Override
             public String call(Object object) throws Exception {
                 return object.event_type;
             }
         }).distinct();
-        allEventTypes.foreach(new VoidFunction<String>() {
-            @Override
-            public void call(String s) throws Exception {
-                System.out.println(s);
-
-            }
-        });
+//        allEventTypes.foreach(new VoidFunction<String>() {
+//            @Override
+//            public void call(String s) throws Exception {
+//                System.out.println(s);
+//
+//            }
+//        });
 
         HashMap<Object, HashMap<String,Double>> labelSetRdd=FractionComputation(allSpatialObjects,allEventTypes,0.3);
         List<Tuple2<Object,List<Tuple2<String,Double>>>> fractionComp=new ArrayList<>();
@@ -435,37 +434,33 @@ public class FractionScore {
         }
         JavaPairRDD<Object, List<Tuple2<String, Double>>> fractionForEachLabel=sc.parallelizePairs(fractionComp);
 
-        double support=SupportComputation(new ArrayList<>(Arrays.asList("A","B","C")),allSpatialObjects,fractionForEachLabel,0.3,sc);
 
-        if(support>0.3)
+        BufferedReader in=null;
+        try
         {
-            System.out.println("ABC is a colocation");
-        }
-//        System.out.println("LABELS RDD");
-//        HashMap<Object, HashMap<String, Double>> label_set_rdd = FractionComputation(allSpatialObjects, allEventTypes, 0.2);
-//        label_set_rdd.foreach(new VoidFunction<Tuple2<Spatial_Point, HashMap<String, Double>>>() {
-//            @Override
-//            public void call(Tuple2<Spatial_Point, HashMap<String, Double>> spatial_pointHashMapTuple2) throws Exception {
-//                Spatial_Point p=spatial_pointHashMapTuple2._1;
-//                HashMap<String, Double> map=spatial_pointHashMapTuple2._2;
-//                System.out.println(p.getFeature_type().getFeature_name()+" "+p.getX()+" "+p.getY());
-//                for(Map.Entry m:map.entrySet())
-//                {
-////                    String f= (Spatial_Feature) m.getKey();
-//                    System.out.println("   "+m.getKey()+" "+m.getValue());
-//                }
-//            }
-//        });
-//        label_set_rdd.forEach(new BiConsumer<Object, HashMap<String, Double>>() {
-//            @Override
-//            public void accept(Object object, HashMap<String, Double> stringDoubleHashMap) {
-//                System.out.println(object.event_type + object.instance_id);
-//                for (Map.Entry<String, Double> m : stringDoubleHashMap.entrySet()) {
-//                    System.out.println("\t" + m.getKey() + " " + m.getValue());
-//                }
-//            }
-//        });
+            in=new BufferedReader(new FileReader("/Users/gagan/Downloads/BTP_Data/Candidate_Colocations.txt"));
 
+            String l;
+            while((l=in.readLine())!=null)
+            {
+                List<String> list=new ArrayList<>(Arrays.asList(l.split(" ")));
+                double support=SupportComputation(list,allSpatialObjects,fractionForEachLabel,0.3,sc);
+                if(support>0.3)
+                {
+                    System.out.println(l+" is a colocation => "+support);
+                }
+                else {
+                    System.out.println(l+" is not a colocation => "+support);
+                }
+            }
+
+        }
+        finally {
+            if(in!=null)
+            {
+                in.close();
+            }
+        }
 
     }
 }

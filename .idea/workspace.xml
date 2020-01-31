@@ -5,8 +5,8 @@
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/FractionScore.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/FractionScore.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/target/classes/FractionScore$1.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/FractionScore$1.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/FractionScore$10.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/FractionScore$10.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/FractionScore$11.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/FractionScore$11.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/FractionScore$10.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/FractionScore$11.class" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/target/classes/FractionScore$2.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/FractionScore$2.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/target/classes/FractionScore$3.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/FractionScore$3.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/target/classes/FractionScore$4.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/FractionScore$4.class" afterDir="false" />
@@ -16,8 +16,6 @@
       <change beforePath="$PROJECT_DIR$/target/classes/FractionScore$8.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/FractionScore$8.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/target/classes/FractionScore$9.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/FractionScore$9.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/target/classes/FractionScore.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/FractionScore.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/Spatial_Feature.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/Spatial_Point.class" beforeDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -70,7 +68,7 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="Application.CandidateColocation">
+  <component name="RunManager" selected="Application.FractionScore">
     <configuration name="CandidateColocation" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
       <option name="MAIN_CLASS_NAME" value="CandidateColocation" />
       <module name="Fraction_Score" />
@@ -87,8 +85,8 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Application.CandidateColocation" />
         <item itemvalue="Application.FractionScore" />
+        <item itemvalue="Application.CandidateColocation" />
       </list>
     </recent_temporary>
   </component>
