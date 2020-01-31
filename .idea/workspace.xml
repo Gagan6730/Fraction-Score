@@ -5,11 +5,10 @@
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/FractionScore.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/FractionScore.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/target/classes/FractionScore$1.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/FractionScore$1.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/FractionScore$2$1.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/FractionScore$10.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/FractionScore$10.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/FractionScore$11.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/FractionScore$11.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/target/classes/FractionScore$2.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/FractionScore$2.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/FractionScore$3$1.class" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/target/classes/FractionScore$3.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/FractionScore$3.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/FractionScore$4$1.class" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/target/classes/FractionScore$4.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/FractionScore$4.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/target/classes/FractionScore$5.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/FractionScore$5.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/target/classes/FractionScore$6.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/FractionScore$6.class" afterDir="false" />
@@ -17,9 +16,8 @@
       <change beforePath="$PROJECT_DIR$/target/classes/FractionScore$8.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/FractionScore$8.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/target/classes/FractionScore$9.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/FractionScore$9.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/target/classes/FractionScore.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/FractionScore.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/Object.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/Object.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/Spatial_Feature.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/Spatial_Feature.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/Spatial_Point.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/Spatial_Point.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/Spatial_Feature.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/Spatial_Point.class" beforeDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -58,6 +56,7 @@
     <property name="project.structure.last.edited" value="Project" />
     <property name="project.structure.proportion" value="0.0" />
     <property name="project.structure.side.proportion" value="0.0" />
+    <property name="settings.editor.selected.configurable" value="preferences.pluginManager" />
   </component>
   <component name="RunDashboard">
     <option name="ruleStates">
@@ -71,7 +70,14 @@
       </list>
     </option>
   </component>
-  <component name="RunManager">
+  <component name="RunManager" selected="Application.CandidateColocation">
+    <configuration name="CandidateColocation" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="CandidateColocation" />
+      <module name="Fraction_Score" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
     <configuration name="FractionScore" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
       <option name="MAIN_CLASS_NAME" value="FractionScore" />
       <module name="Fraction_Score" />
@@ -81,6 +87,7 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Application.CandidateColocation" />
         <item itemvalue="Application.FractionScore" />
       </list>
     </recent_temporary>

@@ -19,64 +19,6 @@ import java.io.Serializable;
 import java.util.*;
 import java.util.function.BiConsumer;
 
-class Spatial_Feature implements Serializable {
-    private String feature_name;
-
-    public Spatial_Feature(String feature_name) {
-        this.feature_name = feature_name;
-    }
-
-    public String getFeature_name() {
-        return feature_name;
-    }
-
-    public void setFeature_name(String feature_name) {
-        this.feature_name = feature_name;
-    }
-
-}
-
-class Spatial_Point implements Serializable {
-    private Spatial_Feature feature_type;
-    private int x, y;
-//    private String name;
-
-    public Spatial_Point(Spatial_Feature feature_type, int x, int y) {
-        this.feature_type = feature_type;
-        this.x = x;
-        this.y = y;
-    }
-
-    public Spatial_Point(int x, int y) {
-        this.x = x;
-        this.y = y;
-    }
-
-    public Spatial_Feature getFeature_type() {
-        return feature_type;
-    }
-
-    public void setFeature_type(Spatial_Feature feature_type) {
-        this.feature_type = feature_type;
-    }
-
-    public int getX() {
-        return x;
-    }
-
-    public void setX(int x) {
-        this.x = x;
-    }
-
-    public int getY() {
-        return y;
-    }
-
-    public void setY(int y) {
-        this.y = y;
-    }
-}
-
 public class FractionScore {
     private static double calca_dist(Object s1, Object s2) {
         double diff_x = Math.pow(s1.getX() - s2.getX(), 2);
@@ -445,7 +387,8 @@ public class FractionScore {
         JavaSparkContext sc = new JavaSparkContext(spark.sparkContext());
 
         /*reading data from data.txt*/
-        JavaRDD<String> lines = sc.textFile("data.txt");
+        JavaRDD<String> lines = sc.textFile("/Users/gagan/Downloads/BTP_Data/sample.txt");
+//                "../../../../../Downloads/BTP_Data/sample.txt");
 
         /*creating objects using create_Object function*/
         JavaRDD<Object> allSpatialObjects = lines.map(FractionScore::create_Object);
@@ -455,7 +398,7 @@ public class FractionScore {
         allSpatialObjects.foreach(new VoidFunction<Object>() {
             @Override
             public void call(Object object) throws Exception {
-                System.out.println(object.event_type + object.instance_id + " " + object.x + " " + object.y);
+                System.out.println(object.event_type +" "+ object.instance_id + " " + object.x + " " + object.y);
             }
         });
 
@@ -471,6 +414,7 @@ public class FractionScore {
             @Override
             public void call(String s) throws Exception {
                 System.out.println(s);
+
             }
         });
 
